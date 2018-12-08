@@ -5,13 +5,15 @@ from string import printable,\
 import random
 import pickle
 
-# Generates a random number for each printable ASCII character,
-# Each character/number pair is stored as a tuple in a list named "code"
-characters = printable
-numbers = random.sample(range(len(characters) + 1000), len(characters))
-code = list(zip(characters, numbers))
+def generate_code():
+    # Generates a random number for each printable ASCII character,
+    # Returns a list of tuples containing each character/number pair.
+    characters = printable
+    numbers = random.sample(range(len(characters) + 1000), len(characters))
+    code = list(zip(characters, numbers))
+    return code
 
-def encode(string):
+def encode(string, code):
     # Replaces each character of string with its code-number
     # and adds a random number of random letters
 
@@ -38,7 +40,7 @@ def encode(string):
                             ) # random uppercase letters randomly inserted
     return ''.join(coded_string)
 
-def decode(string):
+def decode(string, code):
 
     def retrieve_letter(n):
         for letter, number in code:
@@ -63,23 +65,28 @@ def decode(string):
         decoded_string += retrieve_letter(n)
     return decoded_string
 
-def save_code():
-    global code
+def save_code(object):
     with open("code.p", "wb") as f:
-        pickle.dump(code, f)
+        pickle.dump(object, f)
 
-def retrieve_code():
-    global code
-    with open("code.p", "rb") as f:
-        code = pickle.load(f)
+def load_code():
+    try:
+        with open("code.p", "rb") as f:
+            return pickle.load(f)
+    except FileNotFoundError:
+        print("No saved code found.")
+        return None
+
 
 def main():
 
     import time
 
+    code = generate_code()
+
     print("Welcome to my encryption program!")
 
-    while True:
+    while True: #Code selection menu
 
         print("Please select an option:")
         print("1: Use saved code")
@@ -87,12 +94,21 @@ def main():
         print("3: Use new code and keep saved code")
         prompt = input(">")
         if prompt == "1":
-            try:
-                retrieve_code()
-            except:
-                print("No code found, we'll use a new one")
+            if load_code() == None:
+                code = generate_code()
+            else:
+                code = load_code()
+            break
         elif prompt == "2":
-            save_code()
+            save_code(code)
+            break
+        elif prompt == "3":
+            break
+        else:
+            "This option is not available"
+            continue
+
+    while True: #Main Loop, asks user if he wants to encode/decode
 
         print("Would you like to encrypt a phrase?(Y/N)")
 
@@ -104,20 +120,26 @@ def main():
                 print ("Thank you for using the program, good bye!")
                 time.sleep(2)
                 break
-            else:
-                continue
+        else:
+            phrase = input("Enter your text here :\n>")
+            print (f"\nHere is your code : {encode(phrase, code)}\n")
 
-        phrase = input("Enter your text here :\n>")
-        print (f"\nHere is your code : {encode(phrase)}\n")
         print("Would you like to decrypt a phrase?(Y/N)")
+
         prompt = input(">")
         if prompt in ("N", "no", "No", "n"):
-            continue
-        code = input("Enter your code here :\n>")
-        print(f"\nHere is your original text : {decode(code)}\n")
-        time.sleep(1)
-        input("Press Enter to continue")
-        print("\n")
+            print("Press Enter to exit or type in anything to continue:")
+            prompt = input(">")
+            if prompt == '':
+                print ("Thank you for using the program, good bye!")
+                time.sleep(2)
+                break
+        else:
+            coded_phrase = input("Enter your code here :\n>")
+            print(f"\nHere is your original text: {decode(coded_phrase, code)}\n")
+            time.sleep(1)
+            input("Press Enter to continue")
+            print("\n")
 
 if __name__ == '__main__':
     main()
